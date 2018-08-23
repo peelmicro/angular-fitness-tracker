@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { NgForm, FormControl, Validators, FormGroup, FormBuilder } from '@angular/forms';
+import { FormControl, Validators, FormGroup, FormBuilder } from '@angular/forms';
 import * as moment from 'moment';
 
 @Component({
@@ -18,7 +18,6 @@ export class SignupComponent implements OnInit {
       'email': new FormControl('', [Validators.required, Validators.email]),
       'password': new FormControl('', [Validators.required, Validators.minLength(6)]),
       'birthdate': new FormControl( moment(null), Validators.required),
-      // 'agree': new FormControl(false, Validators.required)
       'agree': new FormControl('', Validators.required)
     });
     this.maxDate = moment().add(-18, 'years');
