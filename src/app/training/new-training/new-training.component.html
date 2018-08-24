@@ -1,3 +1,27 @@
-<p>
-  new-training works!
-</p>
+<!-- <section class="new-training" fxLayout fxLayoutAlign="center"> It's the same with the default values -->
+<section class="new-training" fxLayout="row" fxLayoutAlign="center center">
+  <mat-card fxFlex.sx="100%" fxFlex="25rem">
+    <mat-card-title fxLayoutAlign="center">Time to start a workout!</mat-card-title>
+    <mat-card-content fxLayoutAlign="center">
+      <mat-form-field>
+        <mat-select placeholder="Select a workout">
+          <mat-option value="crunches">
+            Crunches
+          </mat-option>          
+          <!-- <mat-option *ngFor="let food of foods" [value]="food.value">
+            {{food.viewValue}}
+          </mat-option> -->
+        </mat-select>
+      </mat-form-field>
+    </mat-card-content>
+    <mat-card-actions fxLayoutAlign="center">
+      <button 
+        mat-button 
+        color="primary" 
+        type="submit"
+        (click)="onStartTraining()"
+      >Start</button>
+    </mat-card-actions>    
+  </mat-card>
+</section>
+  
