@@ -3,7 +3,7 @@
     fxLayout="column" 
     fxLayoutAlign="center center" 
     [formGroup]="signupForm" 
-    fxLayoutGap="10px"
+    fxLayoutGap="0.625rem"
     (ngSubmit)="onSubmit()">
     <mat-form-field>
       <input 
@@ -12,6 +12,7 @@
         placeholder="Your email" 
         formControlName="email" 
       >
+      <mat-hint>Please enter a valid email.</mat-hint>
       <mat-error *ngIf="f['email'].hasError('required')">Email must not be empty!</mat-error>
       <mat-error *ngIf="f['email'].hasError('email')">Email is invalid!</mat-error>
     </mat-form-field> 
@@ -21,7 +22,6 @@
         matInput 
         placeholder="Your password" 
         formControlName="password" 
-        minlength="6"
       >
       <mat-hint align="end">{{ signupForm.value['password']?.length }} / 6</mat-hint>
       <mat-error>Has to be at least 6 characters long.</mat-error>

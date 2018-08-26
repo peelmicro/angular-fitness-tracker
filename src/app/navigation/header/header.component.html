@@ -13,10 +13,18 @@
       fxLayoutGap="10px" 
       class="navigation-items"
     >
-      <li><a routerLink="/signup" routerLinkActive="active-link">Signup</a></li>
-      <li><a routerLink="/login" routerLinkActive="active-link">Login</a></li>
-      <li><a routerLink="/training" routerLinkActive="active-link">Training</a></li>
-      <li><a routerLinkActive="active-link">Logout</a></li>
+      <li *ngIf="!isAuth">
+        <a routerLink="/signup" routerLinkActive="active-link">Signup</a>
+      </li>
+      <li *ngIf="!isAuth">
+        <a routerLink="/login" routerLinkActive="active-link">Login</a>
+      </li>
+      <li *ngIf="isAuth">
+        <a routerLink="/training" routerLinkActive="active-link">Training</a>
+      </li>
+      <li *ngIf="isAuth">
+        <a style="cursor: pointer;" (click)="onLogout()">Logout</a>
+      </li>
     </ul>
   </div>
 </mat-toolbar>
