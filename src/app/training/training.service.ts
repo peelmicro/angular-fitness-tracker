@@ -5,6 +5,7 @@ import { AngularFirestore } from 'angularfire2/firestore';
 import { Subscription } from 'rxjs';
 
 import { Exercise } from './exercise.model';
+import { UiService } from '../shared/ui.service';
 
 @Injectable({
   providedIn: 'root'
@@ -18,10 +19,12 @@ export class TrainingService {
   private availableExercises: Exercise[];
   private runningExercise: Exercise;
   constructor(
-    private db: AngularFirestore
+    private db: AngularFirestore,
+    private uiService: UiService
   ) { }
 
   fecthAvailableExercises() {
+    this.uiService.loadingStateChanged.next(true);
     this.fbSubscriptions.push(this.db
       .collection<Exercise>('availableExercises')
       .snapshotChanges()
@@ -35,16 +38,21 @@ export class TrainingService {
       }))
       .subscribe(
         (exercises: Exercise[]) => {
-        this.availableExercises = exercises;
-        this.availableExercisesChanged.next([...this.availableExercises]);
+          this.uiService.loadingStateChanged.next(false);
+          this.availableExercises = exercises;
+          this.availableExercisesChanged.next([...this.availableExercises]);
+          // this.openSnackBar('Fetching available exercises succeeded.', 'green-snackbar');
         },
-         error => console.log(error)
+        () => {
+          this.openSnackBar('Fetching available exercises failed, please try later.', 'red-snackbar');
+          this.availableExercisesChanged.next(null);
+          this.uiService.loadingStateChanged.next(false);
+        }
       )
     );
   }
 
   startExercise(selectId: string) {
-    // this.db.doc('availableExercises/' + selectId).update({lastSelectedDate: new Date()});
     this.runningExercise = this.availableExercises.find( e => e.id === selectId );
     this.runningExerciseChanged.next({...this.runningExercise});
   }
@@ -76,14 +84,21 @@ export class TrainingService {
   }
 
   fetchCompletedOrCancelledExersises() {
+    this.uiService.loadingStateChanged.next(true);
     this.fbSubscriptions.push(this.db
       .collection<Exercise>('finishedExercises')
       .valueChanges()
       .subscribe(
         (exercises: Exercise[]) => {
+          this.uiService.loadingStateChanged.next(false);
           this.finishedExercisesChanged.next(exercises);
+          // this.openSnackBar('Fetching completed or cancelled exercises succeeded.', 'green-snackbar');
         },
-        error => console.log(error)
+        () => {
+          this.uiService.loadingStateChanged.next(false);
+          this.openSnackBar('Fetching completed or cancelled exercises failed, please try later.', 'red-snackbar');
+          this.finishedExercisesChanged.next(null);
+        }
       )
     );
   }
@@ -93,6 +108,13 @@ export class TrainingService {
   }
 
   cancelSubscriptions() {
-    this.fbSubscriptions.forEach(subscription => subscription.unsubscribe());
+    if (this.fbSubscriptions.length > 0) {
+      this.fbSubscriptions.forEach(subscription => subscription.unsubscribe());
+    }
+  }
+
+  openSnackBar(message: string, className: string) {
+    // this.uiService.showSnackBar(message, className, null, 2000, 'right');
+    this.uiService.showSnackBar(message, className);
   }
 }

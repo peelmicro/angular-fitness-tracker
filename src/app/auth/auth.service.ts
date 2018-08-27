@@ -5,6 +5,7 @@ import { AngularFireAuth } from 'angularfire2/auth';
 
 import { AuthData } from './auth-data.model';
 import { TrainingService } from '../training/training.service';
+import { UiService } from '../shared/ui.service';
 
 @Injectable({
   providedIn: 'root'
@@ -17,7 +18,8 @@ export class AuthService {
   constructor(
     private router: Router,
     private afAuth: AngularFireAuth,
-    private trainingService: TrainingService
+    private trainingService: TrainingService,
+    private uiService: UiService
   ) { }
 
   initAuthListener() {
@@ -38,28 +40,44 @@ export class AuthService {
   }
 
   registerUser(authData: AuthData) {
+    this.uiService.loadingStateChanged.next(true);
     this.afAuth.auth
       .createUserWithEmailAndPassword(authData.email, authData.password)
       .then(() => {
+        this.uiService.loadingStateChanged.next(false);
+        this.openSnackBar('Registration successful', 'green-snackbar');
       })
-      .catch(error => console.log(error));
+      .catch(error => {
+        this.uiService.loadingStateChanged.next(false);
+        this.openSnackBar(error.message, 'red-snackbar');
+      });
   }
 
   login(authData: AuthData) {
+    this.uiService.loadingStateChanged.next(true);
     this.afAuth.auth
       .signInWithEmailAndPassword(authData.email, authData.password)
       .then(() => {
+        this.uiService.loadingStateChanged.next(false);
+        this.openSnackBar('Logged in successfully', 'green-snackbar');
       })
-      .catch(error => console.log(error));
+      .catch(error => {
+        this.uiService.loadingStateChanged.next(false);
+        this.openSnackBar(error.message, 'red-snackbar');
+      });
   }
 
   logout() {
     this.afAuth.auth.signOut();
+    this.openSnackBar('Logged out successfully', 'green-snackbar');
   }
 
   isAuth() {
     return this.isAuthenticated;
   }
 
-
+  openSnackBar(message: string, className: string) {
+    // this.uiService.showSnackBar(message, className, null, 2000, 'right');
+    this.uiService.showSnackBar(message, className);
+  }
 }

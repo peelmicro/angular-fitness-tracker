@@ -6,6 +6,10 @@
 
 > Rename environment.example.ts to environment.ts and put your own values
 
+# Rename environment.example.prod.ts
+
+> Rename environment.example.prod.ts to environment.prod.ts and put your own values
+
 # Follow the course
 
 Follow the course on https://www.udemy.com/angular-full-app-with-angular-material-angularfire-ngrx/
