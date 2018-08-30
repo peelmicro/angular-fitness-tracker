@@ -41,8 +41,8 @@
       type="submit" 
       mat-raised-button color="primary"
       [disabled]="!signupForm.valid"  
-      *ngIf="!isLoading"
+      *ngIf="!(isLoading$ | async)"
     >Submit</button>
-    <mat-spinner *ngIf="isLoading"></mat-spinner>
+    <mat-spinner *ngIf="isLoading$ | async"></mat-spinner>
   </form>
 </section>

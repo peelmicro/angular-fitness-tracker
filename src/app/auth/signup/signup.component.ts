@@ -1,32 +1,31 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormControl, Validators, FormGroup, FormBuilder } from '@angular/forms';
 import * as moment from 'moment';
-import { Subscription } from 'rxjs';
+import { Observable } from 'rxjs';
+import { Store } from '@ngrx/store';
 
 import { AuthService } from '../auth.service';
-import { UiService } from '../../shared/ui.service';
+import * as fromRoot from '../../app.reducer';
 
 @Component({
   selector: 'app-signup',
   templateUrl: './signup.component.html',
   styleUrls: ['./signup.component.css']
 })
-export class SignupComponent implements OnInit, OnDestroy {
+export class SignupComponent implements OnInit {
   maxDate;
   signupForm: FormGroup;
-  isLoading = false;
-  private loadingSubscription: Subscription;
+  isLoading$: Observable<boolean>;
 
   constructor(
     private formBuilder: FormBuilder,
     private authService: AuthService,
-    private uiService: UiService
+    private store: Store<fromRoot.State>
   ) { }
 
   ngOnInit() {
-    this.loadingSubscription = this.uiService.loadingStateChanged.subscribe(
-      isLoading => this.isLoading = isLoading
-    );
+    this.isLoading$ = this.store.select(fromRoot.getIsLoading);
+
     this.signupForm = this.formBuilder.group({
       'email': new FormControl('', [Validators.required, Validators.email]),
       'password': new FormControl('', [Validators.required, Validators.minLength(6)]),
@@ -34,12 +33,6 @@ export class SignupComponent implements OnInit, OnDestroy {
       'agree': new FormControl('', Validators.required)
     });
     this.maxDate = moment().add(-18, 'years');
-  }
-
-  ngOnDestroy() {
-    if (this.loadingSubscription) {
-      this.loadingSubscription.unsubscribe();
-    }
   }
 
   // convenience getter for easy access to form fields

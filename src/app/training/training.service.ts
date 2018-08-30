@@ -1,30 +1,30 @@
-import { Subject, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
 import { AngularFirestore } from 'angularfire2/firestore';
 import { Subscription } from 'rxjs';
+import { take } from 'rxjs/operators';
+import { Store } from '@ngrx/store';
 
 import { Exercise } from './exercise.model';
 import { UiService } from '../shared/ui.service';
+import * as fromTraining from './training.reducer';
+import * as Ui from '../shared/ui.actions';
+import * as Training from './training.actions';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TrainingService {
-  runningExerciseChanged = new Subject<Exercise>();
-  availableExercisesChanged = new Subject<Exercise[]>();
-  finishedExercisesChanged = new Subject<Exercise[]>();
   private fbSubscriptions: Subscription[] = [];
 
-  private availableExercises: Exercise[];
-  private runningExercise: Exercise;
   constructor(
     private db: AngularFirestore,
-    private uiService: UiService
+    private uiService: UiService,
+    private store: Store<fromTraining.State>
   ) { }
 
   fecthAvailableExercises() {
-    this.uiService.loadingStateChanged.next(true);
+    this.store.dispatch(new Ui.StartLoading());
     this.fbSubscriptions.push(this.db
       .collection<Exercise>('availableExercises')
       .snapshotChanges()
@@ -38,66 +38,60 @@ export class TrainingService {
       }))
       .subscribe(
         (exercises: Exercise[]) => {
-          this.uiService.loadingStateChanged.next(false);
-          this.availableExercises = exercises;
-          this.availableExercisesChanged.next([...this.availableExercises]);
-          // this.openSnackBar('Fetching available exercises succeeded.', 'green-snackbar');
+          this.store.dispatch(new Ui.StopLoading());
+          this.store.dispatch(new Training.SetAvailableTrainings(exercises));
         },
         () => {
+          this.store.dispatch(new Ui.StopLoading());
+          this.store.dispatch(new Training.SetAvailableTrainings(null));
           this.openSnackBar('Fetching available exercises failed, please try later.', 'red-snackbar');
-          this.availableExercisesChanged.next(null);
-          this.uiService.loadingStateChanged.next(false);
         }
       )
     );
   }
 
   startExercise(selectId: string) {
-    this.runningExercise = this.availableExercises.find( e => e.id === selectId );
-    this.runningExerciseChanged.next({...this.runningExercise});
+    this.store.dispatch(new Training.StartTraining(selectId));
   }
 
   completeExercise() {
-    this.addExerciseToDatabase({
-      ...this.runningExercise,
-      date: new Date(),
-      state: 'completed'
+    this.store.select(fromTraining.getActiveTraining).pipe(take(1)).subscribe(ex => {
+      this.addExerciseToDatabase({
+        ...ex,
+        date: new Date(),
+        state: 'completed'
+      });
+      this.store.dispatch(new Training.StopTraining());
     });
-    this.runningExercise = null;
-    this.runningExerciseChanged.next(null);
   }
 
   cancelExercise(progress: number) {
-    this.addExerciseToDatabase({
-      ...this.runningExercise,
-      duration: this.runningExercise.duration * (progress / 100),
-      calories: this.runningExercise.calories * (progress / 100),
-      date: new Date(),
-      state: 'cancelled'
+    this.store.select(fromTraining.getActiveTraining).pipe(take(1)).subscribe(ex => {
+      this.addExerciseToDatabase({
+        ...ex,
+        duration: ex.duration * (progress / 100),
+        calories: ex.calories * (progress / 100),
+        date: new Date(),
+        state: 'cancelled'
+      });
+      this.store.dispatch(new Training.StopTraining());
     });
-    this.runningExercise = null;
-    this.runningExerciseChanged.next(null);
-  }
-
-  getRunningExersise() {
-    return {...this.runningExercise};
   }
 
   fetchCompletedOrCancelledExersises() {
-    this.uiService.loadingStateChanged.next(true);
+    this.store.dispatch(new Ui.StartLoading());
     this.fbSubscriptions.push(this.db
       .collection<Exercise>('finishedExercises')
       .valueChanges()
       .subscribe(
         (exercises: Exercise[]) => {
-          this.uiService.loadingStateChanged.next(false);
-          this.finishedExercisesChanged.next(exercises);
-          // this.openSnackBar('Fetching completed or cancelled exercises succeeded.', 'green-snackbar');
+          this.store.dispatch(new Ui.StopLoading());
+          this.store.dispatch(new Training.SetFinishedTrainings(exercises));
         },
         () => {
-          this.uiService.loadingStateChanged.next(false);
+          this.store.dispatch(new Ui.StopLoading());
+          this.store.dispatch(new Training.SetFinishedTrainings(null));
           this.openSnackBar('Fetching completed or cancelled exercises failed, please try later.', 'red-snackbar');
-          this.finishedExercisesChanged.next(null);
         }
       )
     );
@@ -114,7 +108,6 @@ export class TrainingService {
   }
 
   openSnackBar(message: string, className: string) {
-    // this.uiService.showSnackBar(message, className, null, 2000, 'right');
     this.uiService.showSnackBar(message, className);
   }
 }
